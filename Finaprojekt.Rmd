@@ -1,0 +1,104 @@
+---
+title: "kvinder_1860_analysis"
+author: "anonymous"
+date: "2026-05-07"
+output: html_document
+---
+The data is processed with tidyverse and ggplot
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+
+data <- read.csv(
+  "data/census-1860-original-csv-(3).csv",
+  fileEncoding = "UTF-8"
+)
+```
+
+# Civilstand of the women
+
+I am using a ggplot to create a graph that illustrates women's marital status.
+
+```{r}
+ggplot(data, aes(x = civilstand)) +
+  geom_bar(fill = "red") +
+  labs(
+    title = "Kvinders civilstand i Aarhus 1860",
+    x = "Civilstand",
+    y = "Antal kvinder"
+  )
+```
+
+
+# Married vs unmarried women
+
+```{r}
+civil_subset <- data %>%
+  filter(civilstand %in% c("gift", "ugift"))
+
+ggplot(civil_subset, aes(x = civilstand)) +
+  geom_bar(fill = "pink") +
+  labs(
+    title = "Gift vs ugift kvinder i Aarhus 1860",
+    x = "Civilstand",
+    y = "Antal kvinder"
+  )
+```
+
+
+# Top 10 most frequent occupations for woman 
+I am making a table of the most frequent occupations for women in Aarhus in the 1860's as a preparation for a ggplot. 
+
+```{r}
+top10 <- data %>%
+  count(stilling, sort = TRUE) %>%
+  slice(1:10)
+
+top10
+```
+
+
+# Top 10 most frequent occupations for woman
+
+Here is the ggplot that illustrates the frequency itself
+
+```{r}
+ggplot(top10, aes(x = reorder(stilling, n), y = n)) +
+  geom_col(fill = "blue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 kvindelige stillinger i Aarhus 1860",
+    x = "Stilling",
+    y = "Antal kvinder"
+  )
+```
+
+
+
+# Occupations among married and unmarried women
+
+```{r}
+top10_stillinger <- data %>%
+  count(stilling, sort = TRUE) %>%
+  slice(1:10)
+
+civil_stilling <- data %>%
+  filter(
+    civilstand %in% c("gift", "ugift"),
+    stilling %in% top10_stillinger$stilling
+  ) %>%
+  count(civilstand, stilling)
+
+ggplot(civil_stilling,
+       aes(x = reorder(stilling, n), y = n, fill = civilstand)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Top 10 stillinger blandt gifte og ugifte kvinder",
+    x = "Stilling",
+    y = "Antal kvinder",
+    fill = "Civilstand"
+  )
+```
+
