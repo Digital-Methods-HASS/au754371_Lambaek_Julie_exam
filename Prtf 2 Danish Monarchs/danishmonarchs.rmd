@@ -1,0 +1,107 @@
+---
+title: "Danish Kings"
+author: "Anonymous"
+date: "2026-12-03"
+output: html_document
+---
+
+## Load dataset
+```{r}
+library(tidyverse)
+
+monarchs <- read_csv2("data/Danish Monarchs.csv")
+```
+
+## Explore the dataset
+I explore the dataset to get an overview of its content
+
+glimpse() shows the dataset structure, including the column names. 
+
+```{r}
+glimpse(monarchs)
+```
+
+head() displays the first six rows of the dataset
+```{r}
+head(monarchs)
+```
+These functions help check the dataset is loaded correctly and if it is ready for an analysis. 
+
+
+## Average reign length
+
+This code calculates the average reign lenth of the Danish monarchs. It creates a new column with the lennth of each reign, then calculates the average while ignoring missing values.
+Lastly, it identifies the monarchs who ruled longer than the average and prints the average reign lenth and the number of rulers above the average. 
+
+```{r}
+monarchs <- monarchs %>%
+  mutate(reign_length = Regeringsslut - Regeringsstart)
+
+average_reign <- mean(monarchs$reign_length, na.rm = TRUE)
+
+above_average <- monarchs %>%
+  filter(reign_length > average_reign)
+
+
+cat("Average reign length:", average_reign, "years\n")
+cat("Number of rulers above average:", nrow(above_average))
+```
+
+
+
+## Longest reigns among the monarchs
+
+This code finds the three monarchs with the longest reigns. It calculates the length of each reign in years and days, then sorts the monarchs from longest to shortest reign.  Finally, it displays the names and reign lengths of the top three monarchs. 
+
+```{r}
+longest_monarchs <- monarchs %>%
+  mutate(
+    reign_length = Regeringsslut - Regeringsstart,
+    reign_days = reign_length * 365
+  ) %>%
+  arrange(desc(reign_length)) %>%
+  slice(1:3)
+
+longest_monarchs %>%
+  select(Navn, reign_length, reign_days)
+```
+
+## Three longest-ruling monarchs
+
+This code finds the three longest-ruling monarchs. It calculates the length of each reign, sorts the monarchs from longest to shortest reign, and selects the top three, so it can display the names of the monarchs and their reign lengths. 
+
+```{r}
+longest_monarchs <- monarchs %>%
+  mutate(
+    reign_length = Regeringsslut - Regeringsstart
+  ) %>%
+  arrange(desc(reign_length)) %>%
+  slice(1:3)
+
+longest_monarchs %>%
+  select(Navn, reign_length)
+```
+
+
+
+
+## Reign length over time
+This code creates a plot showing how the reign lengths of Danish monarchs have changed over time. It calculates the length and midpoint of each reign, then plots the data ad points with a trend line. The gragh makes it easier to identify overall patterns in reign lenth over time. 
+
+```{r}
+monarchs_plot <- monarchs %>%
+  mutate(
+    reign_length = Regeringsslut - Regeringsstart,
+    mid_year = (Regeringsstart + Regeringsslut) / 2
+  )
+
+ggplot(monarchs_plot, aes(x = mid_year, y = reign_length)) +
+  geom_point(color = "blue") +
+  geom_smooth() +
+  theme_minimal() +
+  labs(
+    title = "Reign Length of Danish Monarchs Over Time",
+    x = "Year",
+    y = "Reign Length (Years)"
+  )
+```
