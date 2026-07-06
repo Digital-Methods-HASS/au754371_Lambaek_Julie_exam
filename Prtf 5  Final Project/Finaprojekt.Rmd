@@ -1,0 +1,106 @@
+---
+title: "kvinder_1860_analysis"
+author: "anonymous"
+date: "2026-05-07"
+output: html_document
+---
+## Load dataset 
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+data <- read.csv(
+  "data/census-1860-original-csv.csv",
+  fileEncoding = "UTF-8"
+)
+
+```
+
+# Marital status of the women
+This code summerizes the marital status of the women in the dataset. It replaces missing or empty values with "Unknown/missing" and counts how many women belong to each marital status. The results shows the number of women who are single, married, dicorced, widowed, or have missing information. 
+
+```{r}
+data %>%
+  mutate(civilstand = ifelse(is.na(civilstand) | civilstand == "",
+                             "Ukendt/Mangler",
+                             civilstand)) %>%
+  count(civilstand)
+```
+
+
+# Married vs unmarried women
+This code compares the number of married and unmarried women in the dataset. It filters the data to include only married and unmarried women, then creates a bar chart showing the number of women in each group. The chart makes i easy to compare the two categories. 
+
+```{r}
+civil_subset <- data %>%
+  filter(civilstand %in% c("Gift", "Ugift"))
+
+ggplot(civil_subset, aes(x = civilstand)) +
+  geom_bar(fill = "pink") +
+  labs(
+    title = "Gift vs ugift kvinder i Aarhus 1860",
+    x = "Civilstand",
+    y = "Antal kvinder"
+  )
+```
+
+
+# Top 10 most frequent occupations for women
+This code finds the 10 most common occupations among women in the dataset. I counts how often each occupation appears, sorts them form most to least common, and selects them in top 10. The resulting table shows the most frequent occupations and can be used for further analysis or visualization. 
+
+```{r}
+top10 <- data %>%
+  count(stilling, sort = TRUE) %>%
+  slice(1:10)
+
+top10
+```
+
+
+# Top 10 most frequent occupations for women
+
+This code creates a bar chart of the 10 most common occupations among women. I uses the top10 table, sorts the occupations by frequently, and displays them as horizintal bars. The chart makes it easy tom compare the most common occupations in the dataset. 
+```{r}
+ggplot(top10, aes(x = reorder(stilling, n), y = n)) +
+  geom_col(fill = "blue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 kvindelige stillinger i Aarhus 1860",
+    x = "Stilling",
+    y = "Antal kvinder"
+  )
+```
+
+
+
+# Occupations among married and unmarried women
+This code compares the most common occupations among married and unmarried women. It selects top 10 occupations, filters the data to include only married and unmarried women, and counts the number of women in each occupation. finally, it creates a grouped bar chart to compare the occupations between the two marital status groups. 
+
+```{r}
+top10_stillinger <- data %>%
+  count(stilling, sort = TRUE) %>%
+  slice(1:10)
+
+civil_stilling <- data %>%
+  filter(
+    civilstand %in% c("Gift", "Ugift"),
+    stilling %in% top10_stillinger$stilling
+  ) %>%
+  count(civilstand, stilling)
+
+ggplot(civil_stilling,
+       aes(x = reorder(stilling, n), y = n, fill = civilstand)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Top 10 stillinger blandt gifte og ugifte kvinder",
+    x = "Stilling",
+    y = "Antal kvinder",
+    fill = "Civilstand"
+  )
+```
+
+
+```
+
