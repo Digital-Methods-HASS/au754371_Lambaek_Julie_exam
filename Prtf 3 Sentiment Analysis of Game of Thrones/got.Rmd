@@ -1,0 +1,92 @@
+---
+title: "got"
+author: "Anonymous"
+date: "2026-05-19"
+output: html_document
+---
+# Packages for text analysis
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(pdftools)
+library(here)
+library(ggwordcloud)
+library(stringr)
+```
+
+
+
+## Import PDF
+
+```{r}
+got_path <- here("data", "got.pdf")
+
+got_text <- pdf_text(got_path)
+```
+
+
+## Wrangle text
+This code prepares the text for further analysis. It converts the imported text into data frame, splits it into separate lines, and removes extra spaces from each line. The cleaned text is then ready. 
+
+```{r split-lines}
+got_df <- data.frame(got_text) %>% 
+  mutate(text_full = str_split(got_text, pattern = '\n')) %>% 
+  unnest(text_full) %>% 
+  mutate(text_full = str_trim(text_full))
+```
+
+
+## Tokenize words
+
+This code splits text into individual words. It uses unnest_tokens() to convert each line of the text into separate words, wiht one word per row. 
+
+```{r tokenize}
+got_tokens <- got_df %>% 
+  unnest_tokens(word, text_full)
+```
+
+## Remove stop words
+
+This code remoces common stop words from the text. It compares the tokenized words with a list of stop words and removes any matches. The remaining words are more useful further text analysis. 
+
+```{r stopwords}
+got_stop <- got_tokens %>% 
+  anti_join(stop_words)
+```
+
+
+## NRC sentiment analysis
+
+This code performs sentiment analysis using NRC sentiment lexicon. It matches the words in the cleaned text NRC dictornary, which assigns words to different emotions and sentiments. The resulting dataset can be used to analyze the emotions expressed in the text.  
+```{r bind-nrc}
+got_nrc <- got_stop %>% 
+  inner_join(get_sentiments("nrc"))
+```
+
+
+
+## Count emotions
+
+This code counts how often each emotion appears in the text. It groups the words by sentiment and counts the number of words in each category. The results shows which emotions are most common in the text. 
+```{r count-nrc}
+got_nrc_n <- got_nrc %>% 
+  count(sentiment, sort = TRUE)
+```
+
+
+
+## Emotion visualization
+
+This code creates a bar chart showing the distribution of emotions in the text. It plots the number of words in each sentiment category and uses different colors for each emotion. The chart makes it easy to see which emotions are most common in the text. 
+
+```{r plot-nrc}
+ggplot(data = got_nrc_n,
+       aes(x = sentiment,
+           y = n)) +
+  geom_col(aes(fill = sentiment)) +
+  theme_bw()
+```
+
+
+
